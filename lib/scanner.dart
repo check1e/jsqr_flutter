@@ -1,13 +1,14 @@
-import 'dart:async';
-import 'dart:core';
+import 'dart:async' show Future, Timer;
+import 'dart:core'
+    show Duration, Future, List, String, bool, dynamic, int, override, print;
 import 'dart:html' as html;
-import 'dart:js_util';
+import 'dart:js_util' show promiseToFuture;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
-import 'jsqr.dart';
-import 'media.dart';
+import 'jsqr.dart' show jsQR;
+import 'media.dart' show UserMediaOptions, VideoOptions, getUserMedia;
 
 class Scanner extends StatefulWidget {
   /// clickToCapture to show a button to capture a Data URL for the image
@@ -23,7 +24,7 @@ class Scanner extends StatefulWidget {
 
   static Future<bool> cameraAvailable() async {
     List<dynamic> sources =
-        await html.window.navigator.mediaDevices.enumerateDevices();
+        await html.window.navigator.mediaDevices!.enumerateDevices();
     print("sources:");
     // List<String> vidIds = [];
     bool hasCam = false;
@@ -39,16 +40,16 @@ class Scanner extends StatefulWidget {
 }
 
 class _ScannerState extends State<Scanner> {
-  html.MediaStream _localStream;
+  html.MediaStream? _localStream;
   // html.CanvasElement canvas;
   // html.CanvasRenderingContext2D ctx;
   bool _inCalling = false;
   bool _isTorchOn = false;
-  html.MediaRecorder _mediaRecorder;
+  html.MediaRecorder? _mediaRecorder;
   bool get _isRec => _mediaRecorder != null;
-  Timer timer;
-  String code;
-  String _errorMsg;
+  Timer? timer;
+  String? code;
+  String? _errorMsg;
   var front = false;
   var video;
   String viewID = "your-view-id";
@@ -96,7 +97,7 @@ class _ScannerState extends State<Scanner> {
 
   void cancel() {
     if (timer != null) {
-      timer.cancel();
+      timer!.cancel();
       timer = null;
     }
     if (_inCalling) {
@@ -133,11 +134,11 @@ class _ScannerState extends State<Scanner> {
       video.setAttribute("playsinline",
           'true'); // required to tell iOS safari we don't want fullscreen
       await video.play();
-    } catch (e) {
-      print("error on getUserMedia: ${e.toString()}");
+    } catch (e, stackTrace) {
+      print("error on getUserMedia: ${e.toString()} $stackTrace");
       cancel();
       setState(() {
-        _errorMsg = e.toString();
+        _errorMsg = e.toString() + stackTrace.toString();
       });
       return;
     }
@@ -158,7 +159,7 @@ class _ScannerState extends State<Scanner> {
   Future<void> _stopStream() async {
     try {
       // await _localStream.dispose();
-      _localStream.getTracks().forEach((track) {
+      _localStream!.getTracks().forEach((track) {
         if (track.readyState == 'live') {
           track.stop();
         }
@@ -173,7 +174,7 @@ class _ScannerState extends State<Scanner> {
   }
 
   _toggleCamera() async {
-    final videoTrack = _localStream
+    final videoTrack = _localStream!
         .getVideoTracks()
         .firstWhere((track) => track.kind == 'video');
     // await videoTrack.switchCamera();
@@ -193,7 +194,7 @@ class _ScannerState extends State<Scanner> {
     // canvas.height = video.videoHeight;
     ctx.drawImage(video, 0, 0);
     html.ImageData imgData =
-        ctx.getImageData(0, 0, canvas.width, canvas.height);
+        ctx.getImageData(0, 0, canvas.width!, canvas.height!);
     // print(imgData);
     var code = jsQR(imgData.data, canvas.width, canvas.height);
     // print("CODE: $code");
@@ -209,7 +210,7 @@ class _ScannerState extends State<Scanner> {
     }
   }
 
-  Future<String> _captureImage() async {
+  Future<String?> _captureImage() async {
     if (_localStream == null) {
       print("localstream is null, can't capture frame");
       return null;
@@ -227,7 +228,7 @@ class _ScannerState extends State<Scanner> {
   @override
   Widget build(BuildContext context) {
     if (_errorMsg != null) {
-      return Center(child: Text(_errorMsg));
+      return Center(child: Text(_errorMsg!));
     }
     if (_localStream == null) {
       return Text("Loading...");
@@ -235,23 +236,24 @@ class _ScannerState extends State<Scanner> {
     return Column(children: [
       Expanded(
         child: Container(
-            // constraints: BoxConstraints(
-            //   maxWidth: 600,
-            //   maxHeight: 1000,
-            // ),
-            child: OrientationBuilder(
-          builder: (context, orientation) {
-            return Center(
-              child: Container(
-                margin: EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
-                // width: MediaQuery.of(context).size.width,
-                // height: MediaQuery.of(context).size.height,
-                child: HtmlElementView(viewType: viewID),
-                decoration: BoxDecoration(color: Colors.black54),
-              ),
-            );
-          },
-        )),
+          // constraints: BoxConstraints(
+          //   maxWidth: 600,
+          //   maxHeight: 1000,
+          // ),
+          child: OrientationBuilder(
+            builder: (context, orientation) {
+              return Center(
+                child: Container(
+                  margin: EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
+                  // width: MediaQuery.of(context).size.width,
+                  // height: MediaQuery.of(context).size.height,
+                  child: HtmlElementView(viewType: viewID),
+                  decoration: BoxDecoration(color: Colors.black54),
+                ),
+              );
+            },
+          ),
+        ),
       ),
       // IconButton(
       //   icon: Icon(Icons.switch_video),
